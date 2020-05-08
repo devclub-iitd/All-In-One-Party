@@ -131,14 +131,15 @@
     };
 
     // 'playing', 'paused', 'loading', or 'idle'
+    console.log(jQuery('.ytp-play-button.ytp-button'))
     var getState = function() {
-      if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
+      if (jQuery('.timeout-wrapper.player-active.icon-play').length > 0) {
         return 'idle';
       }
       if (jQuery('.player-progress-round.player-hidden').length === 0) {
         return 'loading';
       }
-      if (jQuery('.ytp-play-button ytp-button').title !== 'play (k)') {
+      if (jQuery('.ytp-play-button.ytp-button').title !== 'play (k)') {
         return 'playing';
       } else {
         return 'paused';
@@ -156,7 +157,7 @@
     // wake up from idle mode
     var wakeUp = function() {
       uiEventsHappening += 1;
-      jQuery('.timeout-wrapper.player-active .icon-play').click();
+      jQuery('.ytp-play-button.ytp-button').click();
       return delayUntil(function() {
         return getState() !== 'idle';
       }, 2500)().ensure(function() {
@@ -167,7 +168,7 @@
     // show the playback controls
     var showControls = function() {
       uiEventsHappening += 1;
-      var scrubber = jQuery('#scrubber-component');
+      var scrubber = jQuery('#ytp-scrubber-container');
       var eventOptions = {
         'bubbles': true,
         'button': 0,
@@ -209,7 +210,7 @@
     // pause
     var pause = function() {
       uiEventsHappening += 1;
-      jQuery('.player-play-pause.pause').click();
+      jQuery('.ytp-play-button.ytp-button').click();
       return delayUntil(function() {
         return getState() === 'paused';
       }, 1000)().then(hideControls).ensure(function() {
@@ -220,7 +221,7 @@
     // play
     var play = function() {
       uiEventsHappening += 1;
-      jQuery('.ytp-play-button ytp-button').click();
+      jQuery('.ytp-play-button.ytp-button').click();
       return delayUntil(function() {
         return getState() === 'playing';
       }, 2500)().then(hideControls).ensure(function() {
@@ -232,9 +233,9 @@
     var freeze = function(milliseconds) {
       return function() {
         uiEventsHappening += 1;
-        jQuery('.ytp-play-button ytp-button').click();
+        jQuery('.ytp-play-button.ytp-button').click();
         return delay(milliseconds)().then(function() {
-          jQuery('.ytp-play-button ytp-button').click();
+          jQuery('.ytp-play-button.ytp-button').click();
         }).then(hideControls).ensure(function() {
           uiEventsHappening -= 1;
         });
@@ -250,7 +251,7 @@
         var eventOptions, scrubber, oldPlaybackPosition, newPlaybackPosition;
         return showControls().then(function() {
           // compute the parameters for the mouse events
-          scrubber = jQuery('#scrubber-component');
+          scrubber = jQuery('#ytp-scrubber-container');
           var factor = (milliseconds - seekErrorMean) / getDuration();
           factor = Math.min(Math.max(factor, 0), 1);
           var mouseX = scrubber.offset().left + Math.round(scrubber.width() * factor); // relative to the document
@@ -273,7 +274,7 @@
           scrubber[0].dispatchEvent(new MouseEvent('mouseover', eventOptions));
         }).then(delayUntil(function() {
           // wait for the trickplay preview to show up
-          return jQuery('.trickplay-preview').is(':visible');
+          return jQuery('.trickplay-preview').is(':visible');       //TODO
         }, 2500)).then(function() {
           // remember the old position
           oldPlaybackPosition = getPlaybackPosition();
