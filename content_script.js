@@ -121,9 +121,9 @@
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
       var videos = document.getElementsByClassName('video-stream');
-      console.log(video)
+      // console.log(videos)
       
-      if (video.length > 0) {
+      if (videos[0].length > 0) {
         lastDuration = Math.floor(videos[0].duration * 1000);
         console.log(duration)
       }
@@ -131,15 +131,17 @@
     };
 
     // 'playing', 'paused', 'loading', or 'idle'
-    console.log(jQuery('.ytp-play-button.ytp-button'))
+    // console.log(jQuery('.ytp-play-button.ytp-button'))
     var getState = function() {
-      if (jQuery('.timeout-wrapper.player-active.icon-play').length > 0) {
-        return 'idle';
-      }
-      if (jQuery('.player-progress-round.player-hidden').length === 0) {
-        return 'loading';
-      }
-      if (jQuery('.ytp-play-button.ytp-button').title !== 'play (k)') {
+      // if (jQuery('.timeout-wrapper.player-active.icon-play').length > 0) {
+      //   return 'idle';
+      // }
+      // if (jQuery('.player-progress-round.player-hidden').length === 0) {
+      //   return 'loading';
+      // }
+      let title = document.getElementsByClassName('ytp-play-button ytp-button')[0].title
+      console.log(title)
+      if (title !== 'Play (k)') {
         return 'playing';
       } else {
         return 'paused';
@@ -149,9 +151,9 @@
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
       var video=document.getElementsByClassName('video-stream')[0];
-      console.log(video.currentTime);
-      console.log(jQuery('#content'))
-      return Math.floor(video.currentTIme * 1000);
+      // console.log(video.currentTime);
+      // console.log(jQuery('#content'))
+      return Math.floor(video.currentTime * 1000);
     };
 
     // wake up from idle mode
@@ -168,7 +170,7 @@
     // show the playback controls
     var showControls = function() {
       uiEventsHappening += 1;
-      var scrubber = jQuery('#ytp-scrubber-container');
+      var scrubber = jQuery('.ytp-scrubber-container');
       var eventOptions = {
         'bubbles': true,
         'button': 0,
@@ -209,17 +211,24 @@
 
     // pause
     var pause = function() {
+      console.log('about to pause')
+      
+      if(getState()==='Play (k)')
+        return Promise.resolve();
       uiEventsHappening += 1;
       jQuery('.ytp-play-button.ytp-button').click();
       return delayUntil(function() {
         return getState() === 'paused';
-      }, 1000)().then(hideControls).ensure(function() {
+      }, 3000)().then(hideControls).ensure(function() {
         uiEventsHappening -= 1;
       });
     };
 
     // play
     var play = function() {
+      console.log('about to play')
+      if(getState()!=='Play (k)')
+        return Promise.resolve();
       uiEventsHappening += 1;
       jQuery('.ytp-play-button.ytp-button').click();
       return delayUntil(function() {
@@ -231,6 +240,7 @@
 
     // freeze playback for some time and then play
     var freeze = function(milliseconds) {
+      console.log('freeze')
       return function() {
         uiEventsHappening += 1;
         jQuery('.ytp-play-button.ytp-button').click();
@@ -246,16 +256,18 @@
     var seekErrorRecent = [];
     var seekErrorMean = 0;
     var seek = function(milliseconds) {
+      console.log('seeking to ',milliseconds)
       return function() {
         uiEventsHappening += 1;
         var eventOptions, scrubber, oldPlaybackPosition, newPlaybackPosition;
         return showControls().then(function() {
           // compute the parameters for the mouse events
-          scrubber = jQuery('#ytp-scrubber-container');
+          scrubber = jQuery('.ytp-scrubber-container');
+          // console.log(scrubber[0])
           var factor = (milliseconds - seekErrorMean) / getDuration();
           factor = Math.min(Math.max(factor, 0), 1);
-          var mouseX = scrubber.offset().left + Math.round(scrubber.width() * factor); // relative to the document
-          var mouseY = scrubber.offset().top + scrubber.height() / 2;                  // relative to the document
+          var mouseX = scrubber.offsetLeft + Math.round(scrubber.scrollWidth * factor); // relative to the document
+          var mouseY = scrubber.offsetTop + scrubber.scrollHeight / 2;                  // relative to the document
           eventOptions = {
             'bubbles': true,
             'button': 0,
@@ -263,12 +275,13 @@
             'screenY': mouseY - jQuery(window).scrollTop(),
             'clientX': mouseX - jQuery(window).scrollLeft(),
             'clientY': mouseY - jQuery(window).scrollTop(),
-            'offsetX': mouseX - scrubber.offset().left,
-            'offsetY': mouseY - scrubber.offset().top,
+            'offsetX': mouseX - scrubber.offsetLeft,
+            'offsetY': mouseY - scrubber.offsetTop,
             'pageX': mouseX,
             'pageY': mouseY,
             'currentTarget': scrubber[0]
           };
+          console.log('event is', eventOptions)
 
           // make the trickplay preview show up
           scrubber[0].dispatchEvent(new MouseEvent('mouseover', eventOptions));
@@ -649,12 +662,15 @@
     // this function should be called periodically to ensure the Netflix
     // player matches our internal representation of the playback state
     var sync = function() {
+      console.log('syncing to',state)
       if (sessionId === null) {
         return Promise.resolve();
       }
+      let currState = getState()
+      console.log('was b4:',currState)
       if (state === 'paused') {
         var promise;
-        if (getState() === 'paused') {
+        if (currState === 'paused') {
           promise = Promise.resolve();
         } else {
           promise = pause();
@@ -691,6 +707,7 @@
     // waitForChange is a boolean that indicates whether we should wait for
     // the Netflix player to update itself before we broadcast
     var broadcast = function(waitForChange) {
+      console.log('brodcasting');
       return function() {
         var promise;
         if (waitForChange) {
@@ -724,12 +741,15 @@
             lastKnownTimeUpdatedAt = newLastKnownTimeUpdatedAt;
             state = newState;
             return new Promise(function(resolve, reject) {
+              console.log('updating session',newState)
               socket.emit('updateSession', {
                 lastKnownTime: newLastKnownTime,
                 lastKnownTimeUpdatedAt: newLastKnownTimeUpdatedAt.getTime(),
                 state: newState
               }, function(data) {
+                // console.log(data)
                 if (data !== undefined && data.errorMessage !== null) {
+                  console.log('invalid response from server to change state')
                   lastKnownTime = oldLastKnownTime;
                   lastKnownTimeUpdatedAt = oldLastKnownTimeUpdatedAt;
                   state = oldState;
@@ -790,7 +810,7 @@
     });
 
     socket.on('connect', function() {
-      pushTask(ping);
+      console.log('state',state)
       setInterval(function() {
         if (tasksInFlight === 0) {
           // var newVideoId = parseInt(window.location.href.match(/^.*\/([0-9]+)\??.*/)[1]);
