@@ -178,7 +178,7 @@
     // hide the playback controls
     var hideControls = function() {
       uiEventsHappening += 1;
-      var player = jQuery('#netflix-player');
+      var player = jQuery('#primary');
       var mouseX = 100; // relative to the document
       var mouseY = 100; // relative to the document
       var eventOptions = {
@@ -330,7 +330,7 @@
     // this is the markup that needs to be injected onto the page for chat
     var chatHtml = `
       <style>
-        #netflix-player.with-chat {
+        #primary.with-chat {
           width: calc(100% - ${chatSidebarWidth}px) !important;
         }
 
@@ -476,7 +476,7 @@
     // set up the chat state, or reset the state if the system has already been set up
     var initChat = function() {
       if (jQuery('#chat-container').length === 0) {
-        jQuery('#netflix-player').after(chatHtml);
+        jQuery('#primary').after(chatHtml);
         jQuery('#presence-indicator').hide();
         var oldPageX = null;
         var oldPageY = null;
@@ -542,20 +542,20 @@
 
     // query whether the chat sidebar is visible
     var getChatVisible = function() {
-      return jQuery('#netflix-player').hasClass('with-chat');
+      return jQuery('#primary').hasClass('with-chat');
     };
 
     // show or hide the chat sidebar
     var setChatVisible = function(visible) {
       if (visible) {
-        jQuery('#netflix-player').addClass('with-chat');
+        jQuery('#primary').addClass('with-chat');
         jQuery('#chat-container').show();
         if (!document.hasFocus()) {
           clearUnreadCount();
         }
       } else {
         jQuery('#chat-container').hide();
-        jQuery('#netflix-player').removeClass('with-chat');
+        jQuery('#primary').removeClass('with-chat');
       }
     };
 
