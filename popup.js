@@ -69,7 +69,7 @@ $(function() {
 
       // connected/disconnected state
       var showConnected = function(sessionId) {
-        var urlWithSessionId = tabs[0].url.split('?')[0] + '?npSessionId=' + encodeURIComponent(sessionId);
+        var urlWithSessionId = tabs[0].url.split('&')[0] + '&npSessionId=' + encodeURIComponent(sessionId);
         $('.disconnected').addClass('hidden');
         $('.connected').removeClass('hidden');
         $('#show-chat').prop('checked', true);
