@@ -87,7 +87,9 @@ $(function() {
         version: chrome.app.getDetails().version
       }, function(initData) {
         // parse the video ID from the URL
-        var videoId = parseInt(tabs[0].url.match(/^.*\/([0-9]+)\??.*/)[1]);
+        // var videoId = parseInt(tabs[0].url.match(/^.*\/([0-9]+)\??.*/)[1]);
+        var videoId = tabs[0].url.split('=')[1]
+        console.log(videoId,'from URL')
 
         // initial state
         if (initData.errorMessage) {

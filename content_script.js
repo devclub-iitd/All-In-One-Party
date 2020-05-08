@@ -120,7 +120,7 @@
     // video duration in milliseconds
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
-      var video = jQuery('.player-video-wrapper video');
+      var video = jQuery('.video-stream html5-main-video');
       if (video.length > 0) {
         lastDuration = Math.floor(video[0].duration * 1000);
       }
@@ -135,7 +135,7 @@
       if (jQuery('.player-progress-round.player-hidden').length === 0) {
         return 'loading';
       }
-      if (jQuery('.player-control-button.player-play-pause.play').length === 0) {
+      if (jQuery('.ytp-play-button ytp-button').title !== 'play (k)') {
         return 'playing';
       } else {
         return 'paused';
@@ -144,7 +144,7 @@
 
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
-      return Math.floor(jQuery('.player-video-wrapper video')[0].currentTime * 1000);
+      return Math.floor(jQuery('.video-stream html5-main-video')[0].currentTime * 1000);
     };
 
     // wake up from idle mode
@@ -214,7 +214,7 @@
     // play
     var play = function() {
       uiEventsHappening += 1;
-      jQuery('.player-play-pause.play').click();
+      jQuery('.ytp-play-button ytp-button').click();
       return delayUntil(function() {
         return getState() === 'playing';
       }, 2500)().then(hideControls).ensure(function() {
@@ -226,9 +226,9 @@
     var freeze = function(milliseconds) {
       return function() {
         uiEventsHappening += 1;
-        jQuery('.player-play-pause.pause').click();
+        jQuery('.ytp-play-button ytp-button').click();
         return delay(milliseconds)().then(function() {
-          jQuery('.player-play-pause.play').click();
+          jQuery('.ytp-play-button ytp-button').click();
         }).then(hideControls).ensure(function() {
           uiEventsHappening -= 1;
         });
@@ -296,7 +296,7 @@
     //////////////////////////////////////////////////////////////////////////
 
     // connection to the server
-    var socket = io('https://netflixparty-server.herokuapp.com');
+    var socket = io('https://video-stream-party.herokuapp.com');
 
     // get the userId from the server
     var userId = null;
@@ -337,7 +337,7 @@
         #chat-container, #chat-container * {
           box-sizing: border-box;
         }
-
+        getDuration
         #chat-container {
           width: ${chatSidebarWidth}px;
           height: 100%;
@@ -786,7 +786,10 @@
       pushTask(ping);
       setInterval(function() {
         if (tasksInFlight === 0) {
-          var newVideoId = parseInt(window.location.href.match(/^.*\/([0-9]+)\??.*/)[1]);
+          // var newVideoId = parseInt(window.location.href.match(/^.*\/([0-9]+)\??.*/)[1]);
+          var tempString = window.location.href.split('=')[1];
+          if(tempString.indexOf('&')!==-1)
+            tempString = tempString.substring(0,tempString.indexOf('&'))
           if (videoId !== null && videoId !== newVideoId) {
             videoId = newVideoId;
             sessionId = null;
@@ -803,6 +806,7 @@
     socket.on('reconnect', function() {
       if (sessionId !== null) {
         socket.emit('reboot', {
+          host:location.host,
           sessionId: sessionId,
           lastKnownTime: lastKnownTime,
           lastKnownTimeUpdatedAt: lastKnownTimeUpdatedAt.getTime(),
@@ -835,9 +839,11 @@
         }
 
         if (request.type === 'createSession') {
+          console.log('videoID',request.data.videoId)
           socket.emit('createSession', {
             controlLock: request.data.controlLock,
-            videoId: request.data.videoId
+            videoId: request.data.videoId,
+            host:location.host,
           }, function(data) {
             initChat();
             setChatVisible(true);
@@ -848,6 +854,7 @@
             ownerId = request.data.controlLock ? userId : null;
             state = data.state;
             videoId = request.data.videoId;
+            console.log('sessionID from server',sessionId)
             pushTask(broadcast(false));
             sendResponse({
               sessionId: sessionId
