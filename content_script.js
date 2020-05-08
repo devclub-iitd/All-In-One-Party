@@ -120,9 +120,12 @@
     // video duration in milliseconds
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
-      var video = jQuery('.video-stream html5-main-video');
+      var videos = document.getElementsByClassName('video-stream');
+      console.log(video)
+      
       if (video.length > 0) {
-        lastDuration = Math.floor(video[0].duration * 1000);
+        lastDuration = Math.floor(videos[0].duration * 1000);
+        console.log(duration)
       }
       return lastDuration;
     };
@@ -144,7 +147,10 @@
 
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
-      return Math.floor(jQuery('.video-stream html5-main-video')[0].currentTime * 1000);
+      var video=document.getElementsByClassName('video-stream')[0];
+      console.log(video.currentTime);
+      console.log(jQuery('#content'))
+      return Math.floor(video.currentTIme * 1000);
     };
 
     // wake up from idle mode
@@ -790,6 +796,7 @@
           var tempString = window.location.href.split('=')[1];
           if(tempString.indexOf('&')!==-1)
             tempString = tempString.substring(0,tempString.indexOf('&'))
+          var newVideoId = tempString;
           if (videoId !== null && videoId !== newVideoId) {
             videoId = newVideoId;
             sessionId = null;
