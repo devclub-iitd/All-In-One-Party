@@ -117,34 +117,43 @@
     // we will mistake simulated actions for real ones
     var uiEventsHappening = 0;
 
+    
+
+    var play_button_selector = '#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > button';
+    var video_selector = '#movie_player > div.html5-video-container > video';
+
     // video duration in milliseconds
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
-      var video = jQuery('.video-stream html5-main-video');
+      var video = jQuery(video_selector);
       if (video.length > 0) {
         lastDuration = Math.floor(video[0].duration * 1000);
       }
       return lastDuration;
+      
     };
 
     // 'playing', 'paused', 'loading', or 'idle'
     var getState = function() {
-      if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
+      /* if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
         return 'idle';
       }
       if (jQuery('.player-progress-round.player-hidden').length === 0) {
         return 'loading';
-      }
-      if (jQuery('.ytp-play-button ytp-button').title !== 'play (k)') {
+      } */
+      if (jQuery(play_button_selector).title === 'Pause (k)') {
         return 'playing';
-      } else {
+      } else if (jQuery(play_button_selector).title === 'Play (k)') {
         return 'paused';
+      }
+      else{
+        return 'idle';
       }
     };
 
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
-      return Math.floor(jQuery('.video-stream html5-main-video')[0].currentTime * 1000);
+      return Math.floor(jQuery(video_selector)[0].currentTime * 1000);
     };
 
     // wake up from idle mode
@@ -203,7 +212,7 @@
     // pause
     var pause = function() {
       uiEventsHappening += 1;
-      jQuery('.player-play-pause.pause').click();
+      jQuery(play_button_selector).click();
       return delayUntil(function() {
         return getState() === 'paused';
       }, 1000)().then(hideControls).ensure(function() {
@@ -214,7 +223,7 @@
     // play
     var play = function() {
       uiEventsHappening += 1;
-      jQuery('.ytp-play-button ytp-button').click();
+      jQuery(play_button_selector).click();
       return delayUntil(function() {
         return getState() === 'playing';
       }, 2500)().then(hideControls).ensure(function() {
@@ -226,9 +235,9 @@
     var freeze = function(milliseconds) {
       return function() {
         uiEventsHappening += 1;
-        jQuery('.ytp-play-button ytp-button').click();
+        jQuery(play_button_selector).click();
         return delay(milliseconds)().then(function() {
-          jQuery('.ytp-play-button ytp-button').click();
+          jQuery(play_button_selector).click();
         }).then(hideControls).ensure(function() {
           uiEventsHappening -= 1;
         });
@@ -296,7 +305,8 @@
     //////////////////////////////////////////////////////////////////////////
 
     // connection to the server
-    var socket = io('https://video-stream-party.herokuapp.com');
+    url='http://127.0.0.1:3000'
+    var socket = io(url);
 
     // get the userId from the server
     var userId = null;
