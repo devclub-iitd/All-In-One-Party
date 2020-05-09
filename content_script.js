@@ -117,43 +117,47 @@
     // we will mistake simulated actions for real ones
     var uiEventsHappening = 0;
 
+    
+
+    var play_button_selector = '#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > button';
+    var video_selector = '#movie_player > div.html5-video-container > video';
+    var scrubber_selector = '#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-scrubber-container > div > div';
+    var player_selector = '#container';
+
     // video duration in milliseconds
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
-      var videos = document.getElementsByClassName('video-stream');
-      // console.log(videos)
-      
-      if (videos[0].length > 0) {
-        lastDuration = Math.floor(videos[0].duration * 1000);
-        console.log(duration)
+      var video = jQuery(video_selector);
+      if (video.length > 0) {
+        lastDuration = Math.floor(video[0].duration * 1000);
       }
       return lastDuration;
+      
     };
 
     // 'playing', 'paused', 'loading', or 'idle'
     // console.log(jQuery('.ytp-play-button.ytp-button'))
     var getState = function() {
-      // if (jQuery('.timeout-wrapper.player-active.icon-play').length > 0) {
-      //   return 'idle';
-      // }
-      // if (jQuery('.player-progress-round.player-hidden').length === 0) {
-      //   return 'loading';
-      // }
-      let title = document.getElementsByClassName('ytp-play-button ytp-button')[0].title
-      console.log(title)
-      if (title !== 'Play (k)') {
+      /* if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
+        return 'idle';
+      }
+      if (jQuery('.player-progress-round.player-hidden').length === 0) {
+        return 'loading';
+      } */
+      var title = jQuery(play_button_selector)[0].title
+      if (title === 'Pause (k)') {
         return 'playing';
-      } else {
+      } else if (title === 'Play (k)') {
         return 'paused';
+      }
+      else{
+        return 'idle';
       }
     };
 
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
-      var video=document.getElementsByClassName('video-stream')[0];
-      // console.log(video.currentTime);
-      // console.log(jQuery('#content'))
-      return Math.floor(video.currentTime * 1000);
+      return Math.floor(jQuery(video_selector)[0].currentTime * 1000);
     };
 
     // wake up from idle mode
@@ -170,7 +174,7 @@
     // show the playback controls
     var showControls = function() {
       uiEventsHappening += 1;
-      var scrubber = jQuery('.ytp-scrubber-container');
+      var scrubber = jQuery(scrubber_selector);
       var eventOptions = {
         'bubbles': true,
         'button': 0,
@@ -187,7 +191,7 @@
     // hide the playback controls
     var hideControls = function() {
       uiEventsHappening += 1;
-      var player = jQuery('#primary');
+      var player = jQuery(player_selector);
       var mouseX = 100; // relative to the document
       var mouseY = 100; // relative to the document
       var eventOptions = {
@@ -216,7 +220,7 @@
       if(getState()==='Play (k)')
         return Promise.resolve();
       uiEventsHappening += 1;
-      jQuery('.ytp-play-button.ytp-button').click();
+      jQuery(play_button_selector).click();
       return delayUntil(function() {
         return getState() === 'paused';
       }, 3000)().then(hideControls).ensure(function() {
@@ -230,7 +234,7 @@
       if(getState()!=='Play (k)')
         return Promise.resolve();
       uiEventsHappening += 1;
-      jQuery('.ytp-play-button.ytp-button').click();
+      jQuery(play_button_selector).click();
       return delayUntil(function() {
         return getState() === 'playing';
       }, 2500)().then(hideControls).ensure(function() {
@@ -243,9 +247,9 @@
       console.log('freeze')
       return function() {
         uiEventsHappening += 1;
-        jQuery('.ytp-play-button.ytp-button').click();
+        jQuery(play_button_selector).click();
         return delay(milliseconds)().then(function() {
-          jQuery('.ytp-play-button.ytp-button').click();
+          jQuery(play_button_selector).click();
         }).then(hideControls).ensure(function() {
           uiEventsHappening -= 1;
         });
@@ -258,56 +262,55 @@
     var seek = function(milliseconds) {
       console.log('seeking to ',milliseconds)
       return function() {
-        uiEventsHappening += 1;
-        var eventOptions, scrubber, oldPlaybackPosition, newPlaybackPosition;
-        return showControls().then(function() {
-          // compute the parameters for the mouse events
-          scrubber = jQuery('.ytp-scrubber-container');
-          // console.log(scrubber[0])
-          var factor = (milliseconds - seekErrorMean) / getDuration();
-          factor = Math.min(Math.max(factor, 0), 1);
-          var mouseX = scrubber.offsetLeft + Math.round(scrubber.scrollWidth * factor); // relative to the document
-          var mouseY = scrubber.offsetTop + scrubber.scrollHeight / 2;                  // relative to the document
-          eventOptions = {
-            'bubbles': true,
-            'button': 0,
-            'screenX': mouseX - jQuery(window).scrollLeft(),
-            'screenY': mouseY - jQuery(window).scrollTop(),
-            'clientX': mouseX - jQuery(window).scrollLeft(),
-            'clientY': mouseY - jQuery(window).scrollTop(),
-            'offsetX': mouseX - scrubber.offsetLeft,
-            'offsetY': mouseY - scrubber.offsetTop,
-            'pageX': mouseX,
-            'pageY': mouseY,
-            'currentTarget': scrubber[0]
-          };
-          console.log('event is', eventOptions)
+        // uiEventsHappening += 1;
+        // var eventOptions, scrubber, oldPlaybackPosition, newPlaybackPosition;
+        // return showControls().then(function() {
+        //   // compute the parameters for the mouse events
+        //   scrubber = jQuery(scrubber_selector)[0];
+        //   console.log(scrubber)
+        //   var factor = (milliseconds - seekErrorMean) / getDuration();
+        //   factor = Math.min(Math.max(factor, 0), 1);
+        //   var mouseX = scrubber.offset().left + Math.round(scrubber.width() * factor); // relative to the document
+        //   var mouseY = scrubber.offset().top + scrubber.height() / 2;                  // relative to the document
+        //   eventOptions = {
+        //     'bubbles': true,
+        //     'button': 0,
+        //     'screenX': mouseX - jQuery(window).scrollLeft(),
+        //     'screenY': mouseY - jQuery(window).scrollTop(),
+        //     'clientX': mouseX - jQuery(window).scrollLeft(),
+        //     'clientY': mouseY - jQuery(window).scrollTop(),
+        //     'offsetX': mouseX - scrubber.offset().left,
+        //     'offsetY': mouseY - scrubber.offset().top,
+        //     'pageX': mouseX,
+        //     'pageY': mouseY,
+        //     'currentTarget': scrubber[0]
+        //   };
 
-          // make the trickplay preview show up
-          scrubber[0].dispatchEvent(new MouseEvent('mouseover', eventOptions));
-        }).then(delayUntil(function() {
-          // wait for the trickplay preview to show up
-          return jQuery('.trickplay-preview').is(':visible');       //TODO
-        }, 2500)).then(function() {
-          // remember the old position
-          oldPlaybackPosition = getPlaybackPosition();
+        //   // make the trickplay preview show up
+        //   scrubber[0].dispatchEvent(new MouseEvent('mouseover', eventOptions));
+        // }).then(function() {
+        //   // remember the old position
+        //   oldPlaybackPosition = getPlaybackPosition();
 
-          // simulate a click on the scrubber
-          scrubber[0].dispatchEvent(new MouseEvent('mousedown', eventOptions));
-          scrubber[0].dispatchEvent(new MouseEvent('mouseup', eventOptions));
-          scrubber[0].dispatchEvent(new MouseEvent('mouseout', eventOptions));
-        }).then(delayUntil(function() {
-          // wait until the seeking is done
-          newPlaybackPosition = getPlaybackPosition();
-          return Math.abs(newPlaybackPosition - oldPlaybackPosition) >= 1;
-        }, 5000)).then(function() {
-          // compute mean seek error for next time
-          var newSeekError = Math.min(Math.max(newPlaybackPosition - milliseconds, -10000), 10000);
-          shove(seekErrorRecent, newSeekError, 5);
-          seekErrorMean = mean(seekErrorRecent);
-        }).then(hideControls).ensure(function() {
-          uiEventsHappening -= 1;
-        });
+        //   // simulate a click on the scrubber
+        //   scrubber[0].dispatchEvent(new MouseEvent('mousedown', eventOptions));
+        //   scrubber[0].dispatchEvent(new MouseEvent('mouseup', eventOptions));
+        //   scrubber[0].dispatchEvent(new MouseEvent('mouseout', eventOptions));
+        // }).then(delayUntil(function() {
+        //   // wait until the seeking is done
+        //   newPlaybackPosition = getPlaybackPosition();
+        //   return Math.abs(newPlaybackPosition - oldPlaybackPosition) >= 1;
+        // }, 5000)).then(function() {
+        //   // compute mean seek error for next time
+        //   var newSeekError = Math.min(Math.max(newPlaybackPosition - milliseconds, -10000), 10000);
+        //   shove(seekErrorRecent, newSeekError, 5);
+        //   seekErrorMean = mean(seekErrorRecent);
+        // }).then(hideControls).ensure(function() {
+        //   uiEventsHappening -= 1;
+        // });
+        console.log(jQuery(video_selector)[0].currentTime)
+        jQuery(video_selector)[0].currentTime = milliseconds/1000;
+        return Promise.resolve()
       };
     };
 
@@ -316,7 +319,8 @@
     //////////////////////////////////////////////////////////////////////////
 
     // connection to the server
-    var socket = io('https://video-stream-party.herokuapp.com');
+    url='https://video-stream-party.herokuapp.com/'
+    var socket = io(url);
 
     // get the userId from the server
     var userId = null;
@@ -625,7 +629,7 @@
 
     // the Netflix player be kept within this many milliseconds of our
     // internal representation for the playback time
-    var maxTimeError = 2500;
+    var maxTimeError = 5000;
 
     // the session
     var sessionId = null;
@@ -662,7 +666,7 @@
     // this function should be called periodically to ensure the Netflix
     // player matches our internal representation of the playback state
     var sync = function() {
-      console.log('syncing to',state)
+      console.log("Syncing now.. printing at userID " + userId)
       if (sessionId === null) {
         return Promise.resolve();
       }
@@ -673,6 +677,7 @@
         if (currState === 'paused') {
           promise = Promise.resolve();
         } else {
+          console.log("Pausing playback")
           promise = pause();
         }
         return promise.then(function() {
@@ -681,24 +686,33 @@
           }
         });
       } else {
+        console.log("lastKnownTime = " + lastKnownTime + " state = "+ state+" playing at " + getPlaybackPosition())
         return delayUntil(function() {
           return getState() !== 'loading';
         }, Infinity)().then(function() {
+          if (getState() === 'paused'){
+              play();
+          }
           var localTime = getPlaybackPosition();
           var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
           if (Math.abs(localTime - serverTime) > maxTimeError) {
             return seek(serverTime + 2000)().then(function() {
-              var localTime = getPlaybackPosition();
-              var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
-              if (localTime > serverTime && localTime <= serverTime + maxTimeError) {
-                return freeze(localTime - serverTime)();
-              } else {
-                return play();
-              }
+              // var localTime = getPlaybackPosition();
+              // var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
+              // if (localTime > serverTime && localTime <= serverTime + maxTimeError) {
+              //   console.log("I am freezing playback")
+              //   return freeze(localTime - serverTime)();
+              // } 
+              // else {
+              //   console.log("Resumed playback")
+              //   return play();
+              // }
             });
-          } else {
-            return play();
-          }
+          } 
+          // else {
+          //   console.log("The error is not much, hence playing")
+          //   return play();
+          // }
         });
       }
     };
@@ -741,7 +755,7 @@
             lastKnownTimeUpdatedAt = newLastKnownTimeUpdatedAt;
             state = newState;
             return new Promise(function(resolve, reject) {
-              console.log('updating session',newState)
+              console.log('updating session state to',newState)
               socket.emit('updateSession', {
                 lastKnownTime: newLastKnownTime,
                 lastKnownTimeUpdatedAt: newLastKnownTimeUpdatedAt.getTime(),
@@ -766,6 +780,7 @@
 
     // this is called when data is received from the server
     var receive = function(data) {
+      console.log("I recieved some data from the server" + JSON.stringify(data))
       lastKnownTime = data.lastKnownTime;
       lastKnownTimeUpdatedAt = new Date(data.lastKnownTimeUpdatedAt);
       state = data.state;
@@ -810,24 +825,27 @@
     });
 
     socket.on('connect', function() {
-      console.log('state',state)
+      console.log("Connect signal recieved")
+      pushTask(ping);
       setInterval(function() {
         if (tasksInFlight === 0) {
-          // var newVideoId = parseInt(window.location.href.match(/^.*\/([0-9]+)\??.*/)[1]);
+          
           var tempString = window.location.href.split('=')[1];
+          var newVideoId = tempString;
+
           if(tempString.indexOf('&')!==-1)
             tempString = tempString.substring(0,tempString.indexOf('&'))
           var newVideoId = tempString;
           if (videoId !== null && videoId !== newVideoId) {
             videoId = newVideoId;
-            sessionId = null;
+            // sessionId = null;
             setChatVisible(false);
           }
 
           pushTask(ping);
           pushTask(sync);
         }
-      }, 5000);
+      }, 1000);
     });
 
     // if the server goes down, it can reconstruct the session with this
@@ -912,6 +930,7 @@
             initChat();
             setChatVisible(true);
             sessionId = request.data.sessionId;
+            console.log(sessionId)
             lastKnownTime = data.lastKnownTime;
             lastKnownTimeUpdatedAt = new Date(data.lastKnownTimeUpdatedAt);
             messages = [];

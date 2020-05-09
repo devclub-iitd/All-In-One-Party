@@ -89,7 +89,6 @@ $(function() {
         // parse the video ID from the URL
         // var videoId = parseInt(tabs[0].url.match(/^.*\/([0-9]+)\??.*/)[1]);
         var videoId = tabs[0].url.split('=')[1].split('&')[0]
-        console.log(videoId,'from URL')
 
         // initial state
         if (initData.errorMessage) {
