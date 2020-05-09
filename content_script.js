@@ -627,7 +627,7 @@
 
     // the Netflix player be kept within this many milliseconds of our
     // internal representation for the playback time
-    var maxTimeError = 5000;
+    var maxTimeError = 500;
 
     // the session
     var sessionId = null;
@@ -638,28 +638,28 @@
     var videoId = null;
 
     // ping the server periodically to estimate round trip time and client-server time offset
-    var roundTripTimeRecent = [];
-    var roundTripTimeMedian = 0;
-    var localTimeMinusServerTimeRecent = [];
-    var localTimeMinusServerTimeMedian = 0;
-    var ping = function() {
-      return new Promise(function(resolve, reject) {
-        var startTime = (new Date()).getTime();
-        socket.emit('getServerTime', { version: version }, function(serverTime) {
-          var now = new Date();
+    // var roundTripTimeRecent = [];
+    // var roundTripTimeMedian = 0;
+    // var localTimeMinusServerTimeRecent = [];
+    // var localTimeMinusServerTimeMedian = 0;
+    // var ping = function() {
+    //   return new Promise(function(resolve, reject) {
+    //     var startTime = (new Date()).getTime();
+    //     socket.emit('getServerTime', { version: version }, function(serverTime) {
+    //       var now = new Date();
 
-          // compute median round trip time
-          shove(roundTripTimeRecent, now.getTime() - startTime, 5);
-          roundTripTimeMedian = median(roundTripTimeRecent);
+    //       // compute median round trip time
+    //       shove(roundTripTimeRecent, now.getTime() - startTime, 5);
+    //       roundTripTimeMedian = median(roundTripTimeRecent);
 
-          // compute median client-server time offset
-          shove(localTimeMinusServerTimeRecent, (now.getTime() - Math.round(roundTripTimeMedian / 2)) - (new Date(serverTime)).getTime(), 5);
-          localTimeMinusServerTimeMedian = median(localTimeMinusServerTimeRecent);
+    //       // compute median client-server time offset
+    //       shove(localTimeMinusServerTimeRecent, (now.getTime() - Math.round(roundTripTimeMedian / 2)) - (new Date(serverTime)).getTime(), 5);
+    //       localTimeMinusServerTimeMedian = median(localTimeMinusServerTimeRecent);
 
-          resolve();
-        });
-      });
-    };
+    //       resolve();
+    //     });
+    //   });
+    // };
 
     // this function should be called periodically to ensure the Netflix
     // player matches our internal representation of the playback state
@@ -669,7 +669,6 @@
         return Promise.resolve();
       }
       let currState = getState()
-      console.log('was b4:',currState)
       if (state === 'paused') {
         var promise;
         if (currState === 'paused') {
@@ -688,13 +687,14 @@
         return delayUntil(function() {
           return getState() !== 'loading';
         }, Infinity)().then(function() {
-          if (getState() === 'paused'){
-              play();
-          }
+          
           var localTime = getPlaybackPosition();
-          var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
+          var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + 00)) : 0);
           if (Math.abs(localTime - serverTime) > maxTimeError) {
-            return seek(serverTime + 2000)().then(function() {
+            if (getState() === 'paused') {
+              play();
+            }
+            return seek(serverTime)().then(function() {
               // var localTime = getPlaybackPosition();
               // var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
               // if (localTime > serverTime && localTime <= serverTime + maxTimeError) {
@@ -719,8 +719,9 @@
     // waitForChange is a boolean that indicates whether we should wait for
     // the Netflix player to update itself before we broadcast
     var broadcast = function(waitForChange) {
-      console.log('brodcasting');
       return function() {
+        console.log("Calling brodcast at " + new Date().getTime())
+        var callTime = new Date().getTime();
         var promise;
         if (waitForChange) {
           var oldPlaybackPosition = getPlaybackPosition();
@@ -739,9 +740,10 @@
         }, Infinity)).then(function() {
           var now = new Date();
           var localTime = getPlaybackPosition();
-          var serverTime = lastKnownTime + (state === 'playing' ? (now.getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
+          var serverTime = lastKnownTime + (state === 'playing' ? (now.getTime() - (lastKnownTimeUpdatedAt.getTime() + 00)) : 0);
           var newLastKnownTime = localTime;
-          var newLastKnownTimeUpdatedAt = new Date(now.getTime() - localTimeMinusServerTimeMedian);
+          // var newLastKnownTimeUpdatedAt = new Date(now.getTime() - 00);
+          var newLastKnownTimeUpdatedAt = new Date(callTime)
           var newState = getState() === 'playing' ? 'playing' : 'paused';
           if (state === newState && Math.abs(localTime - serverTime) < 1) {
             return Promise.resolve();
@@ -752,6 +754,7 @@
             lastKnownTime = newLastKnownTime;
             lastKnownTimeUpdatedAt = newLastKnownTimeUpdatedAt;
             state = newState;
+            console.log("Dispatching brodcast time at" + newLastKnownTimeUpdatedAt)
             return new Promise(function(resolve, reject) {
               console.log('updating session state to',newState)
               socket.emit('updateSession', {
@@ -805,6 +808,7 @@
       });
     };
 
+    jQuery(play_button_selector)[0].addEventListener('click', () => { console.log("Play pressed at " + new Date().getTime()) })
     // broadcast the playback state if there is any user activity
     jQuery(window).mouseup(function() {
       if (sessionId !== null && uiEventsHappening === 0) {
@@ -822,9 +826,11 @@
       }
     });
 
+    
+
     socket.on('connect', function() {
       console.log("Connect signal recieved")
-      pushTask(ping);
+      // pushTask(ping);
       setInterval(function() {
         if (tasksInFlight === 0) {
           
@@ -840,7 +846,7 @@
             setChatVisible(false);
           }
 
-          pushTask(ping);
+          // pushTask(ping);
           pushTask(sync);
         }
       }, 1000);
