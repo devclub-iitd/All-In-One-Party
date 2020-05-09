@@ -217,13 +217,13 @@
     var pause = function() {
       console.log('about to pause')
       
-      if(getState()==='Play (k)')
+      if(getState()==='paused')
         return Promise.resolve();
       uiEventsHappening += 1;
       jQuery(play_button_selector).click();
       return delayUntil(function() {
         return getState() === 'paused';
-      }, 3000)().then(hideControls).ensure(function() {
+      }, 1000)().then(hideControls).ensure(function() {
         uiEventsHappening -= 1;
       });
     };
@@ -231,7 +231,7 @@
     // play
     var play = function() {
       console.log('about to play')
-      if(getState()!=='Play (k)')
+      if(getState()==='playing')
         return Promise.resolve();
       uiEventsHappening += 1;
       jQuery(play_button_selector).click();
@@ -354,14 +354,14 @@
     // this is the markup that needs to be injected onto the page for chat
     var chatHtml = `
       <style>
-        #primary.with-chat {
+        #content.with-chat {
           width: calc(100% - ${chatSidebarWidth}px) !important;
         }
 
         #chat-container, #chat-container * {
           box-sizing: border-box;
         }
-        getDuration
+    
         #chat-container {
           width: ${chatSidebarWidth}px;
           height: 100%;
@@ -383,9 +383,8 @@
 
         #chat-container #chat-history-container #chat-history {
           width: ${chatSidebarWidth - chatSidebarPadding * 2}px;
-          position: absolute;
-          left: 0;
-          bottom: 0;
+          position: fixed;
+          bottom: 100px;
           max-height: 100%;
           overflow: auto;
         }
@@ -436,9 +435,8 @@
         }
 
         #chat-container #chat-input-container {
-          position: absolute;
+          position: fixed;
           height: ${chatMessageVerticalPadding * 2 + avatarSize + avatarPadding * 2 + avatarBorder * 2}px;
-          left: ${chatSidebarPadding}px;
           bottom: ${chatSidebarPadding}px;
           width: ${chatSidebarWidth - chatSidebarPadding * 2}px;
           background-color: #111;
@@ -500,7 +498,7 @@
     // set up the chat state, or reset the state if the system has already been set up
     var initChat = function() {
       if (jQuery('#chat-container').length === 0) {
-        jQuery('#primary').after(chatHtml);
+        jQuery('#content').append(chatHtml);
         jQuery('#presence-indicator').hide();
         var oldPageX = null;
         var oldPageY = null;
@@ -566,20 +564,20 @@
 
     // query whether the chat sidebar is visible
     var getChatVisible = function() {
-      return jQuery('#primary').hasClass('with-chat');
+      return jQuery('#content').hasClass('with-chat');
     };
 
     // show or hide the chat sidebar
     var setChatVisible = function(visible) {
       if (visible) {
-        jQuery('#primary').addClass('with-chat');
+        jQuery('#content').addClass('with-chat');
         jQuery('#chat-container').show();
         if (!document.hasFocus()) {
           clearUnreadCount();
         }
       } else {
         jQuery('#chat-container').hide();
-        jQuery('#primary').removeClass('with-chat');
+        jQuery('#content').removeClass('with-chat');
       }
     };
 
