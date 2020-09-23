@@ -11,6 +11,18 @@ chrome.runtime.onInstalled.addListener(function(details) {
             pathPrefix: '/watch',
             schemes: ['http', 'https']
           }
+        }),
+        new chrome.declarativeContent.PageStateMatcher({
+          pageUrl: {
+            hostEquals: 'fmovies.co',
+            pathPrefix: '/film',
+            schemes: ['http', 'https']
+          }
+        }),
+        new chrome.declarativeContent.PageStateMatcher({
+          pageUrl: {
+            schemes: ['http', 'https']
+          }
         })
       ],
       actions: [new chrome.declarativeContent.ShowPageAction()]

@@ -119,51 +119,54 @@
 
     
 
-    var play_button_selector = '#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > button';
-    var video_selector = '#movie_player > div.html5-video-container > video';
-    var scrubber_selector = '#movie_player > div.ytp-chrome-bottom > div.ytp-progress-bar-container > div.ytp-progress-bar > div.ytp-scrubber-container > div > div';
-    var player_selector = '#container';
+
+
+
+
+
+
+    // if(window.location.toString().indexOf('youtube.com')!=-1){
+    var video_element = document.getElementsByTagName('video')[0]; 
+    console.log(video_element);
+
+
+
+
+
+
+
+
+
+
+
+
 
     // video duration in milliseconds
     var lastDuration = 60 * 60 * 1000;
     var getDuration = function() {
-      var video = jQuery(video_selector);
-      if (video.length > 0) {
-        lastDuration = Math.floor(video[0].duration * 1000);
+      if (video_element) {
+        lastDuration = Math.floor(video_element.duration * 1000);
       }
       return lastDuration;
       
     };
 
-    // 'playing', 'paused', 'loading', or 'idle'
-    // console.log(jQuery('.ytp-play-button.ytp-button'))
+    
     var getState = function() {
-      /* if (jQuery('.timeout-wrapper.player-active .icon-play').length > 0) {
-        return 'idle';
-      }
-      if (jQuery('.player-progress-round.player-hidden').length === 0) {
-        return 'loading';
-      } */
-      var title = jQuery(play_button_selector)[0].title
-      if (title === 'Pause (k)') {
-        return 'playing';
-      } else if (title === 'Play (k)') {
-        return 'paused';
-      }
-      else{
-        return 'idle';
-      }
+     
+      return video_element.paused?'paused':'playing';
+      
     };
 
     // current playback position in milliseconds
     var getPlaybackPosition = function() {
-      return Math.floor(jQuery(video_selector)[0].currentTime * 1000);
+      return Math.floor(video_element.currentTime * 1000);
     };
 
     // wake up from idle mode
     var wakeUp = function() {
       uiEventsHappening += 1;
-      jQuery('.ytp-play-button.ytp-button').click();
+      video_element.play();
       return delayUntil(function() {
         return getState() !== 'idle';
       }, 2500)().ensure(function() {
@@ -171,47 +174,6 @@
       });
     };
 
-    // show the playback controls
-    var showControls = function() {
-      uiEventsHappening += 1;
-      var scrubber = jQuery(scrubber_selector);
-      var eventOptions = {
-        'bubbles': true,
-        'button': 0,
-        'currentTarget': scrubber[0]
-      };
-      scrubber[0].dispatchEvent(new MouseEvent('mousemove', eventOptions));
-      return delayUntil(function() {
-        return scrubber.is(':visible');
-      }, 1000)().ensure(function() {
-        uiEventsHappening -= 1;
-      });
-    };
-
-    // hide the playback controls
-    var hideControls = function() {
-      uiEventsHappening += 1;
-      var player = jQuery(player_selector);
-      var mouseX = 100; // relative to the document
-      var mouseY = 100; // relative to the document
-      var eventOptions = {
-        'bubbles': true,
-        'button': 0,
-        'screenX': mouseX - jQuery(window).scrollLeft(),
-        'screenY': mouseY - jQuery(window).scrollTop(),
-        'clientX': mouseX - jQuery(window).scrollLeft(),
-        'clientY': mouseY - jQuery(window).scrollTop(),
-        'offsetX': mouseX - player.offset().left,
-        'offsetY': mouseY - player.offset().top,
-        'pageX': mouseX,
-        'pageY': mouseY,
-        'currentTarget': player[0]
-      };
-      player[0].dispatchEvent(new MouseEvent('mousemove', eventOptions));
-      return delay(1)().ensure(function() {
-        uiEventsHappening -= 1;
-      });
-    };
 
     // pause
     var pause = function() {
@@ -220,10 +182,10 @@
       if(getState()==='paused')
         return Promise.resolve();
       uiEventsHappening += 1;
-      jQuery(play_button_selector).click();
+      video_element.pause();
       return delayUntil(function() {
         return getState() === 'paused';
-      }, 1000)().then(hideControls).ensure(function() {
+      }, 1000)().then(console.log('helping')).ensure(function() {
         uiEventsHappening -= 1;
       });
     };
@@ -234,10 +196,10 @@
       if(getState()==='playing')
         return Promise.resolve();
       uiEventsHappening += 1;
-      jQuery(play_button_selector).click();
+      video_element.play();
       return delayUntil(function() {
         return getState() === 'playing';
-      }, 2500)().then(hideControls).ensure(function() {
+      }, 2500)().then(console.log('helping')).ensure(function() {
         uiEventsHappening -= 1;
       });
     };
@@ -247,10 +209,10 @@
       console.log('freeze')
       return function() {
         uiEventsHappening += 1;
-        jQuery(play_button_selector).click();
+        video_element.pause();
         return delay(milliseconds)().then(function() {
-          jQuery(play_button_selector).click();
-        }).then(hideControls).ensure(function() {
+          video_element.play();
+        }).then(console.log('helping')).ensure(function() {
           uiEventsHappening -= 1;
         });
       };
@@ -262,54 +224,9 @@
     var seek = function(milliseconds) {
       console.log('seeking to ',milliseconds)
       return function() {
-        // uiEventsHappening += 1;
-        // var eventOptions, scrubber, oldPlaybackPosition, newPlaybackPosition;
-        // return showControls().then(function() {
-        //   // compute the parameters for the mouse events
-        //   scrubber = jQuery(scrubber_selector)[0];
-        //   console.log(scrubber)
-        //   var factor = (milliseconds - seekErrorMean) / getDuration();
-        //   factor = Math.min(Math.max(factor, 0), 1);
-        //   var mouseX = scrubber.offset().left + Math.round(scrubber.width() * factor); // relative to the document
-        //   var mouseY = scrubber.offset().top + scrubber.height() / 2;                  // relative to the document
-        //   eventOptions = {
-        //     'bubbles': true,
-        //     'button': 0,
-        //     'screenX': mouseX - jQuery(window).scrollLeft(),
-        //     'screenY': mouseY - jQuery(window).scrollTop(),
-        //     'clientX': mouseX - jQuery(window).scrollLeft(),
-        //     'clientY': mouseY - jQuery(window).scrollTop(),
-        //     'offsetX': mouseX - scrubber.offset().left,
-        //     'offsetY': mouseY - scrubber.offset().top,
-        //     'pageX': mouseX,
-        //     'pageY': mouseY,
-        //     'currentTarget': scrubber[0]
-        //   };
-
-        //   // make the trickplay preview show up
-        //   scrubber[0].dispatchEvent(new MouseEvent('mouseover', eventOptions));
-        // }).then(function() {
-        //   // remember the old position
-        //   oldPlaybackPosition = getPlaybackPosition();
-
-        //   // simulate a click on the scrubber
-        //   scrubber[0].dispatchEvent(new MouseEvent('mousedown', eventOptions));
-        //   scrubber[0].dispatchEvent(new MouseEvent('mouseup', eventOptions));
-        //   scrubber[0].dispatchEvent(new MouseEvent('mouseout', eventOptions));
-        // }).then(delayUntil(function() {
-        //   // wait until the seeking is done
-        //   newPlaybackPosition = getPlaybackPosition();
-        //   return Math.abs(newPlaybackPosition - oldPlaybackPosition) >= 1;
-        // }, 5000)).then(function() {
-        //   // compute mean seek error for next time
-        //   var newSeekError = Math.min(Math.max(newPlaybackPosition - milliseconds, -10000), 10000);
-        //   shove(seekErrorRecent, newSeekError, 5);
-        //   seekErrorMean = mean(seekErrorRecent);
-        // }).then(hideControls).ensure(function() {
-        //   uiEventsHappening -= 1;
-        // });
-        console.log(jQuery(video_selector)[0].currentTime)
-        jQuery(video_selector)[0].currentTime = milliseconds/1000;
+       
+        console.log(video_element.currentTime)
+        video_element.currentTime = milliseconds/1000;
         return Promise.resolve()
       };
     };
@@ -808,7 +725,9 @@
       });
     };
 
-    jQuery(play_button_selector)[0].addEventListener('click', () => { console.log("Play pressed at " + new Date().getTime()) })
+    video_element.addEventListener('play', () => { console.log("Played at" + new Date().getTime()) })
+    video_element.addEventListener('pause', () => { console.log("Paused at" + new Date().getTime()) })
+
     // broadcast the playback state if there is any user activity
     jQuery(window).mouseup(function() {
       if (sessionId !== null && uiEventsHappening === 0) {
