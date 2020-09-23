@@ -753,7 +753,7 @@
       setInterval(function() {
         if (tasksInFlight === 0) {
           
-          var tempString = window.location.href.split('=')[1];
+          var tempString = window.location.href;
           var newVideoId = tempString;
 
           if(tempString.indexOf('&')!==-1)
