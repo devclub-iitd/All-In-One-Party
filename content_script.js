@@ -70,24 +70,6 @@
       };
     };
 
-    // add value to the end of array, and remove items from the beginning
-    // such that the length does not exceed limit
-    var shove = function(array, value, limit) {
-      array.push(value);
-      if (array.length > limit) {
-        array.splice(0, array.length - limit);
-      }
-    };
-
-    // compute the mean of an array of numbers
-    var mean = function(array) {
-      return array.reduce(function(a, b) { return a + b; }) / array.length;
-    };
-
-    // compute the median of an array of numbers
-    var median = function(array) {
-      return array.concat().sort()[Math.floor(array.length / 2)];
-    };
 
     // swallow any errors from an action
     // and log them to the console
@@ -554,32 +536,7 @@
     var state = null;
     var videoId = null;
 
-    // ping the server periodically to estimate round trip time and client-server time offset
-    // var roundTripTimeRecent = [];
-    // var roundTripTimeMedian = 0;
-    // var localTimeMinusServerTimeRecent = [];
-    // var localTimeMinusServerTimeMedian = 0;
-    // var ping = function() {
-    //   return new Promise(function(resolve, reject) {
-    //     var startTime = (new Date()).getTime();
-    //     socket.emit('getServerTime', { version: version }, function(serverTime) {
-    //       var now = new Date();
 
-    //       // compute median round trip time
-    //       shove(roundTripTimeRecent, now.getTime() - startTime, 5);
-    //       roundTripTimeMedian = median(roundTripTimeRecent);
-
-    //       // compute median client-server time offset
-    //       shove(localTimeMinusServerTimeRecent, (now.getTime() - Math.round(roundTripTimeMedian / 2)) - (new Date(serverTime)).getTime(), 5);
-    //       localTimeMinusServerTimeMedian = median(localTimeMinusServerTimeRecent);
-
-    //       resolve();
-    //     });
-    //   });
-    // };
-
-    // this function should be called periodically to ensure the Netflix
-    // player matches our internal representation of the playback state
     var sync = function() {
       console.log("Syncing now.. printing at userID " + userId)
       if (sessionId === null) {
@@ -612,22 +569,10 @@
               play();
             }
             return seek(serverTime)().then(function() {
-              // var localTime = getPlaybackPosition();
-              // var serverTime = lastKnownTime + (state === 'playing' ? ((new Date()).getTime() - (lastKnownTimeUpdatedAt.getTime() + localTimeMinusServerTimeMedian)) : 0);
-              // if (localTime > serverTime && localTime <= serverTime + maxTimeError) {
-              //   console.log("I am freezing playback")
-              //   return freeze(localTime - serverTime)();
-              // } 
-              // else {
-              //   console.log("Resumed playback")
-              //   return play();
-              // }
+             
             });
           } 
-          // else {
-          //   console.log("The error is not much, hence playing")
-          //   return play();
-          // }
+       
         });
       }
     };
@@ -724,10 +669,10 @@
         tasksInFlight -= 1;
       });
     };
-
-    video_element.addEventListener('play', () => { console.log("Played at" + new Date().getTime()) })
-    video_element.addEventListener('pause', () => { console.log("Paused at" + new Date().getTime()) })
-
+    if(video_element){
+      video_element.addEventListener('play', () => { console.log("Played at" + new Date().getTime()) })
+      video_element.addEventListener('pause', () => { console.log("Paused at" + new Date().getTime()) })
+    }
     // broadcast the playback state if there is any user activity
     jQuery(window).mouseup(function() {
       if (sessionId !== null && uiEventsHappening === 0) {
@@ -750,14 +695,15 @@
     socket.on('connect', function() {
       console.log("Connect signal recieved")
       // pushTask(ping);
+      if(!video_element)return;
       setInterval(function() {
         if (tasksInFlight === 0) {
           
           var tempString = window.location.href;
           var newVideoId = tempString;
 
-          if(tempString.indexOf('&')!==-1)
-            tempString = tempString.substring(0,tempString.indexOf('&'))
+          if(tempString.indexOf('npSessionId') != -1)
+            tempString = tempString.substring(0,tempString.indexOf('npSessionId')-1);
           var newVideoId = tempString;
           if (videoId !== null && videoId !== newVideoId) {
             videoId = newVideoId;
@@ -773,6 +719,7 @@
 
     // if the server goes down, it can reconstruct the session with this
     socket.on('reconnect', function() {
+      if(!video_element)return;
       if (sessionId !== null) {
         socket.emit('reboot', {
           host:location.host,
@@ -792,6 +739,7 @@
 
     // respond to updates from the server
     socket.on('update', function(data) {
+      if(!video_element)return;
       pushTask(receive(data));
     });
 
@@ -800,9 +748,14 @@
       function(request, sender, sendResponse) {
         if (request.type === 'getInitData') {
           version = request.data.version;
+          if(video_element)
+            sendResponse({
+              sessionId: sessionId,
+              chatVisible: getChatVisible()
+            });
+          else
           sendResponse({
-            sessionId: sessionId,
-            chatVisible: getChatVisible()
+            errorMessage: 'Could not find video in this page'
           });
           return;
         }

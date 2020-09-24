@@ -27,10 +27,10 @@ $(function() {
         $('#error-msg').html(err);
       };
 
-      $('#close-error').click(function() {
-        $('.no-error').removeClass('hidden');
-        $('.some-error').addClass('hidden');
-      });
+      // $('#close-error').click(function() {
+      //   $('.no-error').removeClass('hidden');
+      //   $('.some-error').addClass('hidden');
+      // });
 
       // set up the spinner
       var startSpinning = function() {
@@ -69,7 +69,12 @@ $(function() {
 
       // connected/disconnected state
       var showConnected = function(sessionId) {
-        var urlWithSessionId = tabs[0].url.split('&')[0] + '&npSessionId=' + encodeURIComponent(sessionId);
+        var urlWithSessionId = tabs[0].url
+        if(tabs[0].url.indexOf('?')==-1)
+          var urlWithSessionId = tabs[0].url + '?npSessionId=' + encodeURIComponent(sessionId);
+        else if(tabs[0].url.indexOf('npSessionId')==-1)
+         var urlWithSessionId = tabs[0].url + '&npSessionId=' + encodeURIComponent(sessionId);
+
         $('.disconnected').addClass('hidden');
         $('.connected').removeClass('hidden');
         $('#show-chat').prop('checked', true);
@@ -88,7 +93,10 @@ $(function() {
       }, function(initData) {
         // parse the video ID from the URL
         // var videoId = parseInt(tabs[0].url.match(/^.*\/([0-9]+)\??.*/)[1]);
-        var videoId = tabs[0].url.split('&')[0]
+        var videoId = tabs[0].url.split('npSessionId')[0];
+        if(videoId.endsWith('?')||videoId.endsWith('&'))
+          videoId = videoId.substring(0,videoId.length-1);
+        console.log(videoId)
 
         // initial state
         if (initData.errorMessage) {
