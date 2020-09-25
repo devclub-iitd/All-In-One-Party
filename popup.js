@@ -58,6 +58,7 @@ $(function() {
             stopSpinning();
             if (response.errorMessage) {
               showError(response.errorMessage);
+              setTimeout(()=>window.close(),2000);
               return;
             }
             if (callback) {

@@ -111,6 +111,16 @@
     var video_element = document.getElementsByTagName('video')[0]; 
     console.log(video_element);
 
+    if(!video_element){
+      for(let iframe of jQuery('iframe').get()){
+        if(iframe && iframe['src']){
+          console.log(iframe['src']);
+          document.location = iframe['src'];
+          break;
+        }
+      }        
+    }
+
 
 
 
