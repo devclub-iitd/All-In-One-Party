@@ -2,9 +2,10 @@
 <html>
   <head>
     <title>All-in-one Party</title>
-    <link rel="stylesheet" href="normalize.css">
+    <link rel="stylesheet" href="bootstrap.css">
+    <!-- <link rel="stylesheet" href="normalize.css"> -->
     <link rel="stylesheet" href="popup.css">
-    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src="jquery-3.5.1.min.js"></script>
     <script type="text/javascript" src="popup.js"></script>
   </head>
   <body>
@@ -15,7 +16,7 @@
           <label><input type="checkbox" id="control-lock"> Only I have control</label>
         </p>
         <p>
-          <button id="create-session" type="button">Start the party</button>
+          <button id="create-session" type="button" class='btn btn-primary'>Start the party</button>
         </p>
       </div>
       <div class="connected hidden">
@@ -28,13 +29,13 @@
           <label><input type="checkbox" id="show-chat"> Show chat</label>
         </p>
         <p>
-          <button id="leave-session" type="button">Disconnect</button>
+          <button id="leave-session" type="button" class='btn btn-danger'>Disconnect</button>
         </p>
       </div>
     </div>
     <div class="some-error hidden">
       <p id="error-msg" class="error"></p>
-      <p><button id="close-error" type="button">Dismiss</button></p>
+      <p><button id="force-find" type="button" class='hidden'>Force find</button></p>
     </div>
   </body>
 </html>

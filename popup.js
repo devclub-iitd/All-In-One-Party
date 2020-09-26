@@ -58,6 +58,16 @@ $(function() {
             stopSpinning();
             if (response.errorMessage) {
               showError(response.errorMessage);
+              let f = response.executeFind;
+              if(response.code === 1){
+                $('#force-find').removeClass('hidden');
+                $('#force-find').addClass('btn btn-warning');
+                $('#force-find').click(()=>{
+                  chrome.tabs.sendMessage(tabs[0].id, {type:'forceFind'});
+                  setTimeout(()=>window.close(),2000);
+                });
+                return;
+              }
               setTimeout(()=>window.close(),2000);
               return;
             }

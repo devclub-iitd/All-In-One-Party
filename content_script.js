@@ -111,7 +111,7 @@
     var video_element = document.getElementsByTagName('video')[0]; 
     console.log(video_element);
 
-    if(!video_element){
+    var force_find_video = function() {
       for(let iframe of jQuery('iframe').get()){
         if(iframe && iframe['src']){
           console.log(iframe['src']);
@@ -196,20 +196,7 @@
       });
     };
 
-    // freeze playback for some time and then play
-    var freeze = function(milliseconds) {
-      console.log('freeze')
-      return function() {
-        uiEventsHappening += 1;
-        video_element.pause();
-        return delay(milliseconds)().then(function() {
-          video_element.play();
-        }).then(console.log('helping')).ensure(function() {
-          uiEventsHappening -= 1;
-        });
-      };
-    };
-
+   
     // jump to a specific time in the video
     var seekErrorRecent = [];
     var seekErrorMean = 0;
@@ -763,11 +750,21 @@
               sessionId: sessionId,
               chatVisible: getChatVisible()
             });
+          else if(jQuery('iframe').get().length > 0)
+          sendResponse({
+            errorMessage: 'Could not find video in this page ... \n click on force find to search through iframes',
+            code:1,
+          });
           else
           sendResponse({
-            errorMessage: 'Could not find video in this page'
+            errorMessage: 'Could not find video in this page ',
           });
           return;
+        }
+
+        if (request.type === 'forceFind') {
+          force_find_video();
+          return true;
         }
 
         if (request.type === 'createSession') {
