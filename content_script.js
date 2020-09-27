@@ -250,7 +250,32 @@
     // this is the markup that needs to be injected onto the page for chat
     var chatHtml = `
       <style>
-        #content.with-chat {
+        #chat-history::-webkit-scrollbar {
+          display: none;    // for Chrome
+        }
+        #chat-history {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        #chat-heading{
+          text-align: center;
+          padding: 10px 0;
+          font-family: fantasy;
+          color: bisque;
+          font-size: 25px;
+          margin:1px;
+        }
+        #chat-header{
+          box-sizing: border-box;
+          top: 0;
+          right: 0;
+          position: fixed;
+          height: 40px;
+          width: ${chatSidebarWidth}px;
+          z-index: 9999999999;
+          background-color: #112;
+        }
+        body.with-chat {
           width: calc(100% - ${chatSidebarWidth}px) !important;
         }
 
@@ -261,7 +286,7 @@
         #chat-container {
           width: ${chatSidebarWidth}px;
           height: 100%;
-          position: absolute;
+          position: fixed;
           top: 0;
           right: 0;
           bottom: 0;
@@ -270,27 +295,30 @@
           -webkit-user-select: text;
           z-index: 9999999999;
           padding: ${chatSidebarPadding}px;
+          background-color: #112;
+          border-radius: 0px;
+          margin-top:40px;
+          font-size: 13px;
         }
 
         #chat-container #chat-history-container {
-          height: calc(100% - ${chatMessageVerticalPadding * 2 + avatarSize + avatarPadding * 2 + avatarBorder * 2 + chatVericalMargin * 2 + presenceIndicatorHeight}px);
+          height: calc(100% - ${chatMessageVerticalPadding * 2 + avatarSize + avatarPadding * 2 + avatarBorder * 2 + chatVericalMargin * 2 + presenceIndicatorHeight + 20}px);
           position: relative;
         }
 
         #chat-container #chat-history-container #chat-history {
           width: ${chatSidebarWidth - chatSidebarPadding * 2}px;
-          position: fixed;
-          bottom: 100px;
+          position: relative;
           max-height: 100%;
-          overflow: auto;
+          overflow-y:scroll;
         }
 
         #chat-container #chat-history-container #chat-history .chat-message {
           background-color: #222;
-          color: #999;
+          color: #ddd;
           padding: ${chatMessageVerticalPadding}px ${chatMessageHorizontalPadding}px;
           margin-top: ${chatVericalMargin}px;
-          border-radius: 2px;
+          border-radius: 5px;
           word-wrap: break-word;
           overflow: auto;
         }
@@ -301,7 +329,7 @@
           height: ${avatarSize + avatarPadding * 2 + avatarBorder * 2}px;
           padding: ${avatarPadding}px;
           border: ${avatarBorder}px solid #444;
-          border-radius: 2px;
+          border-radius: 5px;
         }
 
         #chat-container #chat-history-container #chat-history .chat-message .chat-message-avatar img {
@@ -312,11 +340,16 @@
 
         #chat-container #chat-history-container #chat-history .chat-message .chat-message-body {
           padding-left: ${avatarSize + avatarPadding * 2 + avatarBorder * 2 + chatMessageHorizontalPadding}px;
+          padding-bottom:10px;
+          padding-top:10px;
         }
 
         #chat-container #chat-history-container #chat-history .chat-message.system-message .chat-message-body {
           font-style: italic;
           color: #666;
+        }
+        .chat-message{
+
         }
 
         #chat-container #presence-indicator {
@@ -351,7 +384,7 @@
           margin-left: ${chatMessageHorizontalPadding - chatInputBorder}px;
           margin-top: ${chatMessageVerticalPadding - chatInputBorder}px;
           margin-bottom: ${chatMessageVerticalPadding - chatInputBorder}px;
-          border-radius: 2px;
+          border-radius: 10px;
         }
 
         #chat-container #chat-input-container #chat-input-avatar img {
@@ -369,23 +402,30 @@
           background-color: #111;
           border: none;
           outline-style: none;
-          color: #999;
+          color: #ddd;
           padding-top: ${chatMessageVerticalPadding - chatInputBorder}px;
           padding-right: ${chatMessageHorizontalPadding - chatInputBorder}px;
           padding-bottom: ${chatMessageVerticalPadding - chatInputBorder}px;
           padding-left: ${chatMessageHorizontalPadding}px;
         }
       </style>
-      <div id="chat-container">
-        <div id="chat-history-container">
-          <div id="chat-history"></div>
-        </div>
-        <div id="presence-indicator">People are typing...</div>
-        <div id="chat-input-container">
-          <div id="chat-input-avatar"></div>
-          <input id="chat-input"></input>
+      <div id="all">
+        <div id="chat-header">
+          <h2 id="chat-heading">ALL IN ONE CHAT</h2>
+        </div>  
+        <div id="chat-container">
+          <div id="chat-history-container">
+            <div id="chat-history"></div>
+          </div>
+          <div id="presence-indicator">People are typing...</div>
+          <div id="chat-input-container">
+            <div id="chat-input-avatar"></div>
+            <input id="chat-input"></input>
+          </div>
         </div>
       </div>
+      
+      
     `;
 
     // this is used for the chat presence feature
@@ -394,7 +434,7 @@
     // set up the chat state, or reset the state if the system has already been set up
     var initChat = function() {
       if (jQuery('#chat-container').length === 0) {
-        jQuery('#content').append(chatHtml);
+        jQuery('body').append(chatHtml);
         jQuery('#presence-indicator').hide();
         var oldPageX = null;
         var oldPageY = null;
@@ -460,20 +500,20 @@
 
     // query whether the chat sidebar is visible
     var getChatVisible = function() {
-      return jQuery('#content').hasClass('with-chat');
+      return jQuery('body').hasClass('with-chat');
     };
 
     // show or hide the chat sidebar
     var setChatVisible = function(visible) {
       if (visible) {
-        jQuery('#content').addClass('with-chat');
-        jQuery('#chat-container').show();
+        jQuery('body').addClass('with-chat');
+        jQuery('#all').show();
         if (!document.hasFocus()) {
           clearUnreadCount();
         }
       } else {
-        jQuery('#chat-container').hide();
-        jQuery('#content').removeClass('with-chat');
+        jQuery('#all').hide();
+        jQuery('body').removeClass('with-chat');
       }
     };
 
