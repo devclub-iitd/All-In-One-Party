@@ -1,6 +1,6 @@
 'use strict';
 
-$(function() {
+jQuery(function() {
   var getURLParameter = function(url, key) {
     var searchString = '?' + url.split('?')[1];
     if (searchString === undefined) {
@@ -22,27 +22,27 @@ $(function() {
     }, function(tabs) {
       // error handling
       var showError = function(err) {
-        $('.some-error').removeClass('hidden');
-        $('.no-error').addClass('hidden');
-        $('#error-msg').html(err);
+        jQuery('.some-error').removeClass('hidden');
+        jQuery('.no-error').addClass('hidden');
+        jQuery('#error-msg').html(err);
       };
 
-      // $('#close-error').click(function() {
-      //   $('.no-error').removeClass('hidden');
-      //   $('.some-error').addClass('hidden');
+      // jQuery('#close-error').click(function() {
+      //   jQuery('.no-error').removeClass('hidden');
+      //   jQuery('.some-error').addClass('hidden');
       // });
 
       // set up the spinner
       var startSpinning = function() {
-        $('#control-lock').prop('disabled', true);
-        $('#create-session').prop('disabled', true);
-        $('#leave-session').prop('disabled', true);
+        jQuery('#control-lock').prop('disabled', true);
+        jQuery('#create-session').prop('disabled', true);
+        jQuery('#leave-session').prop('disabled', true);
       };
 
       var stopSpinning = function() {
-        $('#control-lock').prop('disabled', false);
-        $('#create-session').prop('disabled', false);
-        $('#leave-session').prop('disabled', false);
+        jQuery('#control-lock').prop('disabled', false);
+        jQuery('#create-session').prop('disabled', false);
+        jQuery('#leave-session').prop('disabled', false);
       };
 
       // send a message to the content script
@@ -60,9 +60,9 @@ $(function() {
               showError(response.errorMessage);
               let f = response.executeFind;
               if(response.code === 1){
-                $('#force-find').removeClass('hidden');
-                $('#force-find').addClass('btn btn-warning');
-                $('#force-find').click(()=>{
+                jQuery('#force-find').removeClass('hidden');
+                jQuery('#force-find').addClass('btn btn-warning');
+                jQuery('#force-find').click(()=>{
                   chrome.tabs.sendMessage(tabs[0].id, {type:'forceFind'});
                   setTimeout(()=>window.close(),2000);
                 });
@@ -86,16 +86,16 @@ $(function() {
         else if(tabs[0].url.indexOf('npSessionId')==-1)
          var urlWithSessionId = tabs[0].url + '&npSessionId=' + encodeURIComponent(sessionId);
 
-        $('.disconnected').addClass('hidden');
-        $('.connected').removeClass('hidden');
-        $('#show-chat').prop('checked', true);
-        $('#share-url').val(urlWithSessionId).focus().select();
+        jQuery('.disconnected').addClass('hidden');
+        jQuery('.connected').removeClass('hidden');
+        jQuery('#show-chat').prop('checked', true);
+        jQuery('#share-url').val(urlWithSessionId).focus().select();
       };
 
       var showDisconnected = function() {
-        $('.disconnected').removeClass('hidden');
-        $('.connected').addClass('hidden');
-        $('#control-lock').prop('checked', false);
+        jQuery('.disconnected').removeClass('hidden');
+        jQuery('.connected').addClass('hidden');
+        jQuery('#control-lock').prop('checked', false);
       };
 
       // get the session if there is one
@@ -127,12 +127,12 @@ $(function() {
         } else {
           showConnected(initData.sessionId);
         }
-        $('#show-chat').prop('checked', initData.chatVisible);
+        jQuery('#show-chat').prop('checked', initData.chatVisible);
 
         // listen for clicks on the "Create session" button
-        $('#create-session').click(function() {
+        jQuery('#create-session').click(function() {
           sendMessage('createSession', {
-            controlLock: $('#control-lock').is(':checked'),
+            controlLock: jQuery('#control-lock').is(':checked'),
             videoId: videoId
           }, function(response) {
             showConnected(response.sessionId);
@@ -140,29 +140,29 @@ $(function() {
         });
 
         // listen for clicks on the "Leave session" button
-        $('#leave-session').click(function() {
+        jQuery('#leave-session').click(function() {
           sendMessage('leaveSession', {}, function(response) {
             showDisconnected();
           });
         });
 
         // listen for clicks on the "Show chat" checkbox
-        $('#show-chat').change(function() {
-          sendMessage('showChat', { visible: $('#show-chat').is(':checked') }, null);
+        jQuery('#show-chat').change(function() {
+          sendMessage('showChat', { visible: jQuery('#show-chat').is(':checked') }, null);
         });
 
         // listen for clicks on the share URL box
-        $('#share-url').click(function(e) {
+        jQuery('#share-url').click(function(e) {
           e.stopPropagation();
           e.preventDefault();
-          $('#share-url').select();
+          jQuery('#share-url').select();
         });
 
         // listen for clicks on the "Copy URL" link
-        $('#copy-btn').click(function(e) {
+        jQuery('#copy-btn').click(function(e) {
           e.stopPropagation();
           e.preventDefault();
-          $('#share-url').select();
+          jQuery('#share-url').select();
           document.execCommand('copy');
         });
       });
