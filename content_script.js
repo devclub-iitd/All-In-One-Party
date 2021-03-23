@@ -171,7 +171,7 @@
     //////////////////////////////////////////////////////////////////////////
 
     // connection to the server
-    url='https://video-stream-party.herokuapp.com/'
+    url='https://streamparty.devclub.in/'
     var socket = io(url);
 
     // get the userId from the server
